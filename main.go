@@ -12,6 +12,7 @@ func main() {
 	router.GET("/albums/:id", getAlbumById)
 	router.POST("/albums", postAlbums)
 	router.DELETE("/delete/:id", deleteAlbum)
+	router.PUT("/albums/:id", updateAlbum)
 
 	router.Run("localhost:8080")
 }
@@ -84,5 +85,41 @@ func deleteAlbum(c *gin.Context) {
 		return
 	}
 	//send back this message if album not found
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Album not found."})
+}
+
+// updateAlbum takes the payload and updates an existing album based on it
+func updateAlbum(c *gin.Context) {
+	id := c.Param("id")
+
+	//create a struct to represent the updated album data
+	var updatedAlbum struct {
+		Title  string  `json:"title"`
+		Artist string  `json:"artist"`
+		Price  float64 `json:"price"`
+	}
+
+	if err := c.ShouldBindJSON(&updatedAlbum); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//look for if the album already exists
+	index := -1
+	for i, a := range albums {
+		if a.ID == id {
+			index = i
+			break
+		}
+	}
+
+	if index != -1 {
+		albums[index].Title = updatedAlbum.Title
+		albums[index].Artist = updatedAlbum.Artist
+		albums[index].Price = updatedAlbum.Price
+
+		c.JSON(http.StatusOK, gin.H{"message": "Album updated succesfully."})
+		return
+	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Album not found."})
 }
