@@ -11,6 +11,7 @@ func main() {
 	router.GET("/albums", getAlbums)
 	router.GET("/albums/:id", getAlbumById)
 	router.POST("/albums", postAlbums)
+	router.DELETE("/delete/:id", deleteAlbum)
 
 	router.Run("localhost:8080")
 }
@@ -60,4 +61,28 @@ func postAlbums(c *gin.Context) {
 	// add the new album to the slice
 	albums = append(albums, newAlbum)
 	c.IndentedJSON(http.StatusCreated, newAlbum)
+}
+
+// deleteAlbum deletes an album based on ID
+func deleteAlbum(c *gin.Context) {
+	id := c.Param("id")
+
+	//similar to getAlbumById, look for a matching ID and it's index
+	index := -1
+	for i, a := range albums {
+		if a.ID == id {
+			index = i
+			break
+		}
+	}
+
+	if index != -1 {
+		//delete the album from the data store
+		albums = append(albums[:index], albums[index+1:]...)
+		//send back a message signifying success
+		c.JSON(http.StatusOK, gin.H{"message": "Album deleted succesfully."})
+		return
+	}
+	//send back this message if album not found
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Album not found."})
 }
